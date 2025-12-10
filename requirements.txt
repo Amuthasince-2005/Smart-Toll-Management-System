@@ -1,0 +1,21 @@
+Flask==2.3.2
+Flask-SQLAlchemy==3.0.5
+Flask-Login==0.6.2
+Flask-CORS==4.0.0
+SQLAlchemy==2.0.19
+
+# Machine Learning
+scikit-learn==1.3.0
+numpy==1.24.3
+pandas==2.0.3
+
+# Big Data (Optional - for Spark)
+pyspark==3.4.0
+
+# Utilities
+Werkzeug==2.3.6
+python-dotenv==1.0.0
+
+# Development (Optional)
+pytest==7.4.0
+pytest-cov==4.1.0

@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Toll Booth - Smart Toll System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1><i class="fas fa-booth"></i> Toll Booth Interface</h1>
+            <p class="text-muted">Process vehicle toll collections</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Vehicle Search & Toll Processing -->
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-search"></i> Search Vehicle</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form id="vehicleSearchForm">
+                        <div class="mb-3">
+                            <label for="vehicleNumber" class="form-label">Vehicle Number / RFID Tag</label>
+                            <div class="input-group input-group-lg">
+                                <input type="text" class="form-control" id="vehicleNumber" name="vehicle_number" 
+                                       placeholder="Enter vehicle registration or RFID tag" autocomplete="off" required>
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div id="vehicleInfo" style="display: none;">
+                        <div class="alert alert-success" role="alert">
+                            <h5>Vehicle Details</h5>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <p><strong>Vehicle Number:</strong> <span id="displayVehicleNumber"></span></p>
+                                    <p><strong>Vehicle Type:</strong> <span id="displayVehicleType"></span></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Owner:</strong> <span id="displayOwnerName"></span></p>
+                                    <p><strong>Wallet Balance:</strong> <span id="displayWalletBalance" class="badge bg-info"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toll Processing Section -->
+            <div class="card shadow mt-4" id="tollProcessing" style="display: none;">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-receipt"></i> Process Toll</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form id="tollProcessForm">
+                        <input type="hidden" id="vehicleId" name="vehicle_id">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="plazaId" class="form-label">Toll Plaza</label>
+                                <select class="form-control" id="plazaId" name="plaza_id" required>
+                                    <option value="">-- Select Plaza --</option>
+                                    <option value="1">Highway Plaza - North</option>
+                                    <option value="2">Highway Plaza - South</option>
+                                    <option value="3">City Bypass - East</option>
+                                    <option value="4">City Bypass - West</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="laneNo" class="form-label">Lane Number</label>
+                                <select class="form-control" id="laneNo" name="lane_no" required>
+                                    <option value="1">Lane 1</option>
+                                    <option value="2">Lane 2</option>
+                                    <option value="3">Lane 3</option>
+                                    <option value="4">Lane 4</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="paymentMode" class="form-label">Payment Mode</label>
+                                <select class="form-control" id="paymentMode" name="payment_mode" required>
+                                    <option value="wallet">Wallet (FASTag)</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="upi">UPI</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="estimatedToll" class="form-label">Estimated Toll Amount</label>
+                                <input type="text" class="form-control" id="estimatedToll" readonly>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="reset" class="btn btn-outline-secondary">
+                                <i class="fas fa-sync"></i> Reset
+                            </button>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-check-circle"></i> Process Toll
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toll Receipt Panel -->
+        <div class="col-md-4">
+            <div class="card shadow" id="receiptCard" style="display: none;">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-receipt"></i> Receipt</h5>
+                </div>
+                <div class="card-body">
+                    <div id="receiptContent" class="text-center">
+                        <i class="fas fa-check-circle text-success fa-4x mb-3"></i>
+                        <h5 id="receiptStatus">Transaction Successful</h5>
+                        
+                        <div class="text-start mt-4">
+                            <p><strong>Transaction ID:</strong> <br><span id="receiptTxnId" class="font-monospace"></span></p>
+                            <p><strong>Vehicle:</strong> <br><span id="receiptVehicle"></span></p>
+                            <p><strong>Plaza:</strong> <br><span id="receiptPlaza"></span></p>
+                            <p><strong>Amount:</strong> <br><h5 class="text-success" id="receiptAmount"></h5></p>
+                            <p><strong>Payment Mode:</strong> <br><span id="receiptPayment"></span></p>
+                            <p><strong>Date & Time:</strong> <br><span id="receiptTime" class="small"></span></p>
+                        </div>
+
+                        <button class="btn btn-primary w-100 mt-3" onclick="printReceipt()">
+                            <i class="fas fa-print"></i> Print Receipt
+                        </button>
+
+                        <button class="btn btn-secondary w-100 mt-2" onclick="resetForm()">
+                            <i class="fas fa-redo"></i> New Transaction
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Panel -->
+            <div class="card shadow mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle"></i> Station Info</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Status:</strong> <span class="badge bg-success">ONLINE</span></p>
+                    <p><strong>Time:</strong> <span id="currentTime"></span></p>
+                    <p><strong>Operator:</strong> {{ current_user.name }}</p>
+                    <p id="todayStats" class="small text-muted">Transactions today: <span id="txnCount">0</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update current time
+    function updateTime() {
+        const now = new Date();
+        document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // Vehicle search
+    document.getElementById('vehicleSearchForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const vehicleNumber = document.getElementById('vehicleNumber').value;
+
+        fetch('/toll/search-vehicle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ vehicle_number: vehicleNumber })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('vehicleId').value = data.vehicle.vehicle_id;
+                document.getElementById('displayVehicleNumber').textContent = data.vehicle.vehicle_number;
+                document.getElementById('displayVehicleType').textContent = data.vehicle.vehicle_type.toUpperCase();
+                document.getElementById('displayOwnerName').textContent = data.vehicle.owner_name;
+                document.getElementById('displayWalletBalance').textContent = 'Rs. ' + data.vehicle.wallet_balance.toFixed(2);
+                document.getElementById('vehicleInfo').style.display = 'block';
+                document.getElementById('tollProcessing').style.display = 'block';
+                document.getElementById('receiptCard').style.display = 'none';
+            } else {
+                alert(data.message);
+                document.getElementById('vehicleInfo').style.display = 'none';
+                document.getElementById('tollProcessing').style.display = 'none';
+            }
+        });
+    });
+
+    // Toll processing
+    document.getElementById('tollProcessForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('/toll/process', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(Object.fromEntries(formData))
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showReceipt(data);
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
+    });
+
+    function showReceipt(data) {
+        document.getElementById('receiptTxnId').textContent = '#' + data.transaction_id;
+        document.getElementById('receiptVehicle').textContent = data.vehicle_number + ' (' + data.vehicle_type + ')';
+        document.getElementById('receiptPlaza').textContent = document.getElementById('plazaId').options[document.getElementById('plazaId').selectedIndex].text;
+        document.getElementById('receiptAmount').textContent = 'Rs. ' + data.amount.toFixed(2);
+        document.getElementById('receiptPayment').textContent = data.payment_mode;
+        document.getElementById('receiptTime').textContent = new Date(data.timestamp).toLocaleString();
+        
+        document.getElementById('vehicleInfo').style.display = 'none';
+        document.getElementById('tollProcessing').style.display = 'none';
+        document.getElementById('receiptCard').style.display = 'block';
+    }
+});
+
+function resetForm() {
+    document.getElementById('vehicleSearchForm').reset();
+    document.getElementById('tollProcessForm').reset();
+    document.getElementById('vehicleInfo').style.display = 'none';
+    document.getElementById('tollProcessing').style.display = 'none';
+    document.getElementById('receiptCard').style.display = 'none';
+    document.getElementById('vehicleNumber').focus();
+}
+
+function printReceipt() {
+    window.print();
+}
+</script>
+{% endblock %}

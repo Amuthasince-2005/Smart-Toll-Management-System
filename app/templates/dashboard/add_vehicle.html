@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Add Vehicle - Smart Toll System{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Register New Vehicle</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('dashboard.add_vehicle') }}">
+                        <div class="mb-3">
+                            <label for="vehicle_number" class="form-label">Vehicle Number <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="vehicle_number" name="vehicle_number" 
+                                   placeholder="e.g., DL01AB1234" required>
+                            <small class="form-text text-muted">Format: State Code + 2 digits + 2 letters + 4 digits</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="vehicle_type" class="form-label">Vehicle Type <span class="text-danger">*</span></label>
+                            <select class="form-control" id="vehicle_type" name="vehicle_type" required>
+                                <option value="">-- Select Vehicle Type --</option>
+                                <option value="bike">Bike</option>
+                                <option value="car">Car</option>
+                                <option value="truck">Truck</option>
+                                <option value="bus">Bus</option>
+                                <option value="heavy_vehicle">Heavy Vehicle</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="rfid_tag_id" class="form-label">RFID Tag ID</label>
+                            <input type="text" class="form-control" id="rfid_tag_id" name="rfid_tag_id" 
+                                   placeholder="Optional - RFID tag for vehicle">
+                            <small class="form-text text-muted">Optional: Can be used for faster toll processing</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="owner_name" class="form-label">Owner Name</label>
+                            <input type="text" class="form-control" id="owner_name" name="owner_name" 
+                                   value="{{ current_user.name }}" readonly>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-plus"></i> Register Vehicle
+                            </button>
+                            <a href="{{ url_for('dashboard.vehicles') }}" class="btn btn-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-4" role="alert">
+                <h5>Vehicle Types & Toll Rates:</h5>
+                <ul class="mb-0">
+                    <li><strong>Bike:</strong> ₹20 (Normal) / ₹25 (Peak)</li>
+                    <li><strong>Car:</strong> ₹50 (Normal) / ₹75 (Peak)</li>
+                    <li><strong>Truck:</strong> ₹100 (Normal) / ₹150 (Peak)</li>
+                    <li><strong>Bus:</strong> ₹75 (Normal) / ₹100 (Peak)</li>
+                    <li><strong>Heavy Vehicle:</strong> ₹150 (Normal) / ₹200 (Peak)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

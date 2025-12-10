@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block title %}Spark Integration Dashboard - Smart Toll System{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="fas fa-sync-alt"></i> Spark Integration Dashboard</h2>
+            <p class="text-muted">Real-time synchronization between Flask and Spark cluster</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" id="refreshBtn" onclick="refreshMetrics()">
+                <i class="fas fa-sync"></i> Refresh Now
+            </button>
+            <a href="http://DESKTOP-9Q68UBH:4040" target="_blank" class="btn btn-info">
+                <i class="fas fa-external-link-alt"></i> Spark UI
+            </a>
+        </div>
+    </div>
+
+    <!-- Real-time Metrics Cards -->
+    <div class="row mb-4" id="metricsContainer">
+        <div class="col-md-12 text-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading metrics...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connection Status -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-database"></i> Flask Database Status</h5>
+                </div>
+                <div class="card-body" id="flaskStatus">
+                    <p class="text-muted">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-fire"></i> Spark Cluster Status</h5>
+                </div>
+                <div class="card-body" id="sparkStatus">
+                    <p class="text-muted">Loading...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Spark Jobs -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-tasks"></i> Active Spark Jobs</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="jobsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Job ID</th>
+                                <th>Application</th>
+                                <th>Status</th>
+                                <th>Tasks</th>
+                                <th>Progress</th>
+                                <th>Submitted</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jobsTableBody">
+                            <tr><td colspan="6" class="text-center text-muted">Loading jobs...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction Analytics -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Transaction Analytics (Spark Processed)</h5>
+                </div>
+                <div class="card-body" id="analyticsContainer">
+                    <p class="text-muted">Loading analytics...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Export for Spark -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-download"></i> Data Export for Spark Processing</h5>
+                </div>
+                <div class="card-body">
+                    <p>Export transaction data for Spark processing and analytics:</p>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-outline-primary" onclick="exportData(7)">
+                            <i class="fas fa-calendar"></i> Last 7 Days
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="exportData(30)">
+                            <i class="fas fa-calendar"></i> Last 30 Days
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" onclick="exportData(90)">
+                            <i class="fas fa-calendar"></i> Last 90 Days
+                        </button>
+                        <button type="button" class="btn btn-outline-success" onclick="exportData(999)">
+                            <i class="fas fa-database"></i> All Data
+                        </button>
+                    </div>
+                    <div id="exportStatus" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-refresh metrics every 10 seconds
+setInterval(refreshMetrics, 10000);
+
+async function refreshMetrics() {
+    try {
+        // Get real-time metrics
+        const metricsRes = await fetch('{{ url_for("admin.api_realtime_metrics") }}');
+        const metrics = await metricsRes.json();
+        
+        if (metrics.success) {
+            displayMetrics(metrics);
+        }
+        
+        // Get Spark jobs
+        const jobsRes = await fetch('{{ url_for("admin.api_spark_jobs") }}');
+        const jobs = await jobsRes.json();
+        
+        if (jobs.success) {
+            displaySparkJobs(jobs);
+        }
+        
+        // Get transaction summary
+        const summaryRes = await fetch('{{ url_for("admin.api_transaction_summary") }}');
+        const summary = await summaryRes.json();
+        
+        if (summary.success) {
+            displayAnalytics(summary);
+        }
+    } catch (error) {
+        console.error('Error refreshing metrics:', error);
+    }
+}
+
+function displayMetrics(metrics) {
+    const db = metrics.database;
+    const spark = metrics.spark;
+    
+    const flaskHTML = `
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <p class="text-muted mb-1">Total Transactions</p>
+                <h4 class="text-primary">${db.total_transactions}</h4>
+            </div>
+            <div class="col-md-4 mb-3">
+                <p class="text-muted mb-1">Today's Revenue</p>
+                <h4 class="text-success">₹${db.today_revenue.toFixed(2)}</h4>
+            </div>
+            <div class="col-md-4 mb-3">
+                <p class="text-muted mb-1">Unique Users</p>
+                <h4 class="text-info">${db.unique_users}</h4>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-md-3"><small class="text-muted">Total Revenue:</small><br><strong>₹${db.total_revenue.toFixed(2)}</strong></div>
+            <div class="col-md-3"><small class="text-muted">Total Plazas:</small><br><strong>${db.total_plazas}</strong></div>
+            <div class="col-md-3"><small class="text-muted">Total Vehicles:</small><br><strong>${db.total_vehicles}</strong></div>
+            <div class="col-md-3"><small class="text-muted">Today's Txns:</small><br><strong>${db.today_transactions}</strong></div>
+        </div>
+    `;
+    
+    const sparkHTML = `
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <p class="text-muted mb-1">Cluster Status</p>
+                <h4>
+                    ${spark.cluster_status === 'connected' 
+                        ? '<span class="badge bg-success">Connected</span>' 
+                        : '<span class="badge bg-danger">Disconnected</span>'}
+                </h4>
+            </div>
+            <div class="col-md-4 mb-3">
+                <p class="text-muted mb-1">Active Jobs</p>
+                <h4 class="text-warning">${spark.active_jobs}</h4>
+            </div>
+            <div class="col-md-4 mb-3">
+                <p class="text-muted mb-1">Cluster URL</p>
+                <h6><code>${spark.cluster_url}</code></h6>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('flaskStatus').innerHTML = flaskHTML;
+    document.getElementById('sparkStatus').innerHTML = sparkHTML;
+    
+    // Display metric cards
+    const cardsHTML = `
+        <div class="col-md-3">
+            <div class="card bg-primary text-white shadow">
+                <div class="card-body">
+                    <h6 class="card-title">Database Transactions</h6>
+                    <h3>${db.total_transactions}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow">
+                <div class="card-body">
+                    <h6 class="card-title">Total Revenue</h6>
+                    <h3>₹${db.total_revenue.toFixed(0)}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white shadow">
+                <div class="card-body">
+                    <h6 class="card-title">Spark Jobs</h6>
+                    <h3>${spark.active_jobs}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white shadow">
+                <div class="card-body">
+                    <h6 class="card-title">Cluster Status</h6>
+                    <h3>${spark.cluster_status === 'connected' ? '✓ Online' : '✗ Offline'}</h3>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('metricsContainer').innerHTML = cardsHTML;
+}
+
+function displaySparkJobs(jobs) {
+    if (!jobs.jobs || jobs.jobs.length === 0) {
+        document.getElementById('jobsTableBody').innerHTML = 
+            '<tr><td colspan="6" class="text-center text-muted">No active Spark jobs</td></tr>';
+        return;
+    }
+    
+    const rows = jobs.jobs.map(job => `
+        <tr>
+            <td><strong>#${job.job_id}</strong></td>
+            <td>${job.app_name}</td>
+            <td><span class="badge bg-${job.status === 'SUCCEEDED' ? 'success' : job.status === 'RUNNING' ? 'warning' : 'danger'}">${job.status}</span></td>
+            <td>${job.completed_tasks}/${job.num_tasks}</td>
+            <td>
+                <div class="progress" style="height: 20px;">
+                    <div class="progress-bar" style="width: ${(job.completed_tasks/job.num_tasks*100).toFixed(0)}%">
+                        ${(job.completed_tasks/job.num_tasks*100).toFixed(0)}%
+                    </div>
+                </div>
+            </td>
+            <td><small>${new Date(job.submitted_time).toLocaleTimeString()}</small></td>
+        </tr>
+    `).join('');
+    
+    document.getElementById('jobsTableBody').innerHTML = rows;
+}
+
+function displayAnalytics(summary) {
+    if (!summary.data) return;
+    
+    const data = summary.data;
+    const plazaRows = Object.entries(data.by_plaza).map(([plaza, stats]) => `
+        <tr>
+            <td>${plaza}</td>
+            <td>${stats.count}</td>
+            <td>₹${stats.revenue.toFixed(2)}</td>
+        </tr>
+    `).join('');
+    
+    const vehicleRows = Object.entries(data.by_vehicle_type).map(([type, stats]) => `
+        <tr>
+            <td>${type.replace('_', ' ').toUpperCase()}</td>
+            <td>${stats.count}</td>
+            <td>₹${stats.revenue.toFixed(2)}</td>
+        </tr>
+    `).join('');
+    
+    const analyticsHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Revenue by Plaza</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead><tr><th>Plaza</th><th>Transactions</th><th>Revenue</th></tr></thead>
+                        <tbody>${plazaRows}</tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h6>Revenue by Vehicle Type</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead><tr><th>Type</th><th>Transactions</th><th>Revenue</th></tr></thead>
+                        <tbody>${vehicleRows}</tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('analyticsContainer').innerHTML = analyticsHTML;
+}
+
+async function exportData(days) {
+    const exportDiv = document.getElementById('exportStatus');
+    exportDiv.innerHTML = '<div class="spinner-border" role="status"><span class="visually-hidden">Exporting...</span></div>';
+    
+    try {
+        const response = await fetch(`{{ url_for("admin.api_export_data", days=0) }}`.replace('0', days));
+        const data = await response.json();
+        
+        if (data.success) {
+            const jsonStr = JSON.stringify(data.data, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `toll_data_${days}days_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            
+            exportDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> 
+                    Exported ${data.total_records} records successfully!
+                </div>
+            `;
+        } else {
+            exportDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.message}</div>`;
+        }
+    } catch (error) {
+        exportDiv.innerHTML = `<div class="alert alert-danger">Export failed: ${error.message}</div>`;
+    }
+}
+
+// Initial load
+window.addEventListener('load', refreshMetrics);
+</script>
+{% endblock %}

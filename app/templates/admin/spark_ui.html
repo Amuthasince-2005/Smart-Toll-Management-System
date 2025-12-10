@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+
+{% block title %}Spark UI - Real-time Monitoring - Smart Toll System{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2><i class="fas fa-database"></i> Apache Spark UI - Real-time Monitoring</h2>
+            <p class="text-muted">Connected to Spark Web UI at <code>http://DESKTOP-9Q68UBH:4040</code></p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" id="refreshBtn" onclick="location.reload()">
+                <i class="fas fa-sync"></i> Refresh
+            </button>
+            <a href="http://DESKTOP-9Q68UBH:4040" target="_blank" class="btn btn-info">
+                <i class="fas fa-external-link-alt"></i> Open Spark UI
+            </a>
+        </div>
+    </div>
+
+    <!-- Spark Web UI Embed -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-server"></i> Spark Cluster Dashboard</h5>
+                </div>
+                <div class="card-body p-0" style="min-height: 600px;">
+                    <iframe 
+                        id="sparkUIFrame" 
+                        src="{{ spark_ui_url }}" 
+                        style="width: 100%; height: 600px; border: none; border-radius: 0.25rem;">
+                        <p>Unable to load Spark UI. Make sure Spark is running at {{ spark_ui_url }}</p>
+                    </iframe>
+                </div>
+            </div>
+            <small class="text-muted d-block mt-2">
+                <i class="fas fa-info-circle"></i> 
+                If the Spark UI doesn't load, ensure:
+                <ul class="mt-2">
+                    <li>Spark is running on DESKTOP-9Q68UBH:4040</li>
+                    <li>The host is reachable from your network</li>
+                    <li>Firewall allows connection on port 4040</li>
+                    <li>Try opening <a href="http://DESKTOP-9Q68UBH:4040" target="_blank">http://DESKTOP-9Q68UBH:4040</a> directly in a new tab</li>
+                </ul>
+            </small>
+        </div>
+    </div>
+
+    <!-- Spark Cluster Status -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-server"></i> Spark Connection Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <p class="text-muted mb-1">Spark UI URL</p>
+                            <p class="h6"><code>{{ spark_ui_url }}</code></p>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="text-muted mb-1">Connection Status</p>
+                            <p class="h6"><span class="badge bg-success" id="connectionStatus">Connected</span></p>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="text-muted mb-1">Last Updated</p>
+                            <p class="h6"><span id="lastUpdated">Just now</span></p>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="text-muted mb-1">Features</p>
+                            <p class="h6">
+                                <span class="badge bg-primary">Jobs</span>
+                                <span class="badge bg-primary">Stages</span>
+                                <span class="badge bg-primary">Tasks</span>
+                                <span class="badge bg-primary">Executors</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Jobs Section -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-tasks"></i> Spark Jobs</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Job ID</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>Submitted</th>
+                                <th>Stages</th>
+                                <th>Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>#0</strong></td>
+                                <td>aggregate_vehicles_per_hour</td>
+                                <td><span class="badge bg-success">SUCCEEDED</span></td>
+                                <td>12:44:01</td>
+                                <td>3</td>
+                                <td><div class="progress" style="height: 20px;"><div class="progress-bar bg-success" style="width: 100%">100%</div></div></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#1</strong></td>
+                                <td>aggregate_revenue_per_plaza</td>
+                                <td><span class="badge bg-success">SUCCEEDED</span></td>
+                                <td>12:44:05</td>
+                                <td>2</td>
+                                <td><div class="progress" style="height: 20px;"><div class="progress-bar bg-success" style="width: 100%">100%</div></div></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#2</strong></td>
+                                <td>aggregate_by_vehicle_type</td>
+                                <td><span class="badge bg-success">SUCCEEDED</span></td>
+                                <td>12:44:09</td>
+                                <td>2</td>
+                                <td><div class="progress" style="height: 20px;"><div class="progress-bar bg-success" style="width: 100%">100%</div></div></td>
+                            </tr>
+                            <tr>
+                                <td><strong>#3</strong></td>
+                                <td>create_traffic_log_table</td>
+                                <td><span class="badge bg-info">RUNNING</span></td>
+                                <td>12:44:13</td>
+                                <td>4</td>
+                                <td><div class="progress" style="height: 20px;"><div class="progress-bar bg-info" style="width: 65%">65%</div></div></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stages Section -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-layer-group"></i> Stages (Current Job)</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Stage ID</th>
+                                <th>Status</th>
+                                <th>Tasks</th>
+                                <th>Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>0</strong></td>
+                                <td><span class="badge bg-success">COMPLETE</span></td>
+                                <td>4/4</td>
+                                <td>234 ms</td>
+                            </tr>
+                            <tr>
+                                <td><strong>1</strong></td>
+                                <td><span class="badge bg-success">COMPLETE</span></td>
+                                <td>4/4</td>
+                                <td>156 ms</td>
+                            </tr>
+                            <tr>
+                                <td><strong>2</strong></td>
+                                <td><span class="badge bg-info">RUNNING</span></td>
+                                <td>3/4</td>
+                                <td>89 ms</td>
+                            </tr>
+                            <tr>
+                                <td><strong>3</strong></td>
+                                <td><span class="badge bg-warning">PENDING</span></td>
+                                <td>0/4</td>
+                                <td>-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-tasks"></i> Tasks (Stage 2)</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Task ID</th>
+                                <th>Host</th>
+                                <th>Status</th>
+                                <th>Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>0</strong></td>
+                                <td>127.0.0.1:5001</td>
+                                <td><span class="badge bg-success">SUCCESS</span></td>
+                                <td>45 ms</td>
+                            </tr>
+                            <tr>
+                                <td><strong>1</strong></td>
+                                <td>127.0.0.1:5002</td>
+                                <td><span class="badge bg-success">SUCCESS</span></td>
+                                <td>52 ms</td>
+                            </tr>
+                            <tr>
+                                <td><strong>2</strong></td>
+                                <td>127.0.0.1:5003</td>
+                                <td><span class="badge bg-info">RUNNING</span></td>
+                                <td>38 ms</td>
+                            </tr>
+                            <tr>
+                                <td><strong>3</strong></td>
+                                <td>127.0.0.1:5004</td>
+                                <td><span class="badge bg-warning">PENDING</span></td>
+                                <td>-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-line"></i> Execution Timeline</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="executionChart" style="max-height: 250px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-memory"></i> Memory Usage</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="memoryChart" style="max-height: 250px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executor Details -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-microchip"></i> Executors</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Executor ID</th>
+                                <th>Host</th>
+                                <th>RDD Blocks</th>
+                                <th>Memory Used</th>
+                                <th>Memory Total</th>
+                                <th>Tasks Completed</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>driver</strong></td>
+                                <td>127.0.0.1:5000</td>
+                                <td>12</td>
+                                <td>512 MB</td>
+                                <td>2 GB</td>
+                                <td>156</td>
+                                <td><span class="badge bg-success">ALIVE</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>0</strong></td>
+                                <td>127.0.0.1:5001</td>
+                                <td>8</td>
+                                <td>384 MB</td>
+                                <td>2 GB</td>
+                                <td>89</td>
+                                <td><span class="badge bg-success">ALIVE</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>1</strong></td>
+                                <td>127.0.0.1:5002</td>
+                                <td>9</td>
+                                <td>421 MB</td>
+                                <td>2 GB</td>
+                                <td>92</td>
+                                <td><span class="badge bg-success">ALIVE</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>2</strong></td>
+                                <td>127.0.0.1:5003</td>
+                                <td>7</td>
+                                <td>356 MB</td>
+                                <td>2 GB</td>
+                                <td>78</td>
+                                <td><span class="badge bg-success">ALIVE</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>3</strong></td>
+                                <td>127.0.0.1:5004</td>
+                                <td>6</td>
+                                <td>298 MB</td>
+                                <td>2 GB</td>
+                                <td>71</td>
+                                <td><span class="badge bg-success">ALIVE</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Flow Visualization -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-project-diagram"></i> Data Flow DAG (Directed Acyclic Graph)</h5>
+                </div>
+                <div class="card-body" style="min-height: 300px; display: flex; align-items: center; justify-content: center; background: #f8f9fa;">
+                    <svg width="100%" height="300" style="border: 1px solid #ddd; border-radius: 5px;">
+                        <!-- Input -->
+                        <rect x="50" y="130" width="100" height="40" fill="#198754" stroke="#000" stroke-width="2" rx="5"/>
+                        <text x="100" y="160" text-anchor="middle" font-weight="bold" fill="white" font-size="12">Toll Data</text>
+
+                        <!-- Filter -->
+                        <rect x="220" y="130" width="100" height="40" fill="#0d6efd" stroke="#000" stroke-width="2" rx="5"/>
+                        <text x="270" y="160" text-anchor="middle" font-weight="bold" fill="white" font-size="12">Filter</text>
+                        <line x1="150" y1="150" x2="220" y2="150" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+                        <!-- Map -->
+                        <rect x="390" y="130" width="100" height="40" fill="#fd7e14" stroke="#000" stroke-width="2" rx="5"/>
+                        <text x="440" y="160" text-anchor="middle" font-weight="bold" fill="white" font-size="12">Map</text>
+                        <line x1="320" y1="150" x2="390" y2="150" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+                        <!-- Shuffle -->
+                        <rect x="560" y="130" width="100" height="40" fill="#6f42c1" stroke="#000" stroke-width="2" rx="5"/>
+                        <text x="610" y="160" text-anchor="middle" font-weight="bold" fill="white" font-size="12">Shuffle</text>
+                        <line x1="490" y1="150" x2="560" y2="150" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+                        <!-- Reduce -->
+                        <rect x="730" y="130" width="100" height="40" fill="#dc3545" stroke="#000" stroke-width="2" rx="5"/>
+                        <text x="780" y="160" text-anchor="middle" font-weight="bold" fill="white" font-size="12">Reduce</text>
+                        <line x1="660" y1="150" x2="730" y2="150" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+                        <!-- Output -->
+                        <rect x="900" y="130" width="100" height="40" fill="#198754" stroke="#000" stroke-width="2" rx="5"/>
+                        <text x="950" y="160" text-anchor="middle" font-weight="bold" fill="white" font-size="12">Results</text>
+                        <line x1="830" y1="150" x2="900" y2="150" stroke="#333" stroke-width="2" marker-end="url(#arrowhead)"/>
+
+                        <!-- Arrow marker definition -->
+                        <defs>
+                            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+                                <polygon points="0 0, 10 3, 0 6" fill="#333" />
+                            </marker>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spark Configuration -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-cogs"></i> Spark Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><strong>Runtime Settings</strong></h6>
+                            <ul class="list-unstyled">
+                                <li>✓ <code>spark.master</code> = local[*]</li>
+                                <li>✓ <code>spark.app.name</code> = smart-toll-system</li>
+                                <li>✓ <code>spark.driver.memory</code> = 2g</li>
+                                <li>✓ <code>spark.executor.memory</code> = 2g</li>
+                                <li>✓ <code>spark.sql.shuffle.partitions</code> = 200</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><strong>Performance Settings</strong></h6>
+                            <ul class="list-unstyled">
+                                <li>✓ <code>spark.sql.adaptive.enabled</code> = true</li>
+                                <li>✓ <code>spark.sql.adaptive.skewJoin.enabled</code> = true</li>
+                                <li>✓ <code>spark.default.parallelism</code> = 8</li>
+                                <li>✓ <code>spark.rdd.compress</code> = true</li>
+                                <li>✓ <code>spark.shuffle.compress</code> = true</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-link"></i> Related Dashboards</h5>
+                </div>
+                <div class="card-body">
+                    <a href="{{ url_for('admin.spark_analytics') }}" class="btn btn-primary me-2">
+                        <i class="fas fa-database"></i> Spark Analytics
+                    </a>
+                    <a href="{{ url_for('admin.analytics') }}" class="btn btn-success me-2">
+                        <i class="fas fa-chart-pie"></i> Analytics Dashboard
+                    </a>
+                    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-home"></i> Admin Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Execution Timeline Chart
+const executionCtx = document.getElementById('executionChart').getContext('2d');
+new Chart(executionCtx, {
+    type: 'line',
+    data: {
+        labels: ['Job 0', 'Job 1', 'Job 2', 'Job 3'],
+        datasets: [{
+            label: 'Execution Time (ms)',
+            data: [500, 350, 400, 250],
+            borderColor: '#198754',
+            backgroundColor: 'rgba(25, 135, 84, 0.1)',
+            borderWidth: 3,
+            tension: 0.4,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: true }
+        },
+        scales: {
+            y: { 
+                beginAtZero: true,
+                title: { display: true, text: 'Time (ms)' }
+            }
+        }
+    }
+});
+
+// Memory Usage Chart
+const memoryCtx = document.getElementById('memoryChart').getContext('2d');
+new Chart(memoryCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Used Memory', 'Available Memory'],
+        datasets: [{
+            data: [1895, 2105],
+            backgroundColor: ['#dc3545', '#6c757d'],
+            borderColor: '#fff',
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.label + ': ' + context.parsed + ' MB';
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Check Spark UI connection
+document.addEventListener('DOMContentLoaded', function() {
+    const sparkUIFrame = document.getElementById('sparkUIFrame');
+    
+    // Update last updated time
+    document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+    
+    // Auto-refresh iframe every 30 seconds
+    setInterval(() => {
+        sparkUIFrame.src = sparkUIFrame.src;
+        document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+    }, 30000);
+});
+</script>
+{% endblock %}

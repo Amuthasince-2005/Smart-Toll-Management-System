@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Smart Toll System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1><i class="fas fa-chart-line"></i> Admin Dashboard</h1>
+            <p class="text-muted">System overview and analytics</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 text-uppercase">Total Plazas</p>
+                            <h3 class="mb-0">{{ total_plazas }}</h3>
+                        </div>
+                        <i class="fas fa-road fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 text-uppercase">Total Users</p>
+                            <h3 class="mb-0">{{ total_users }}</h3>
+                        </div>
+                        <i class="fas fa-users fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 text-uppercase">Total Vehicles</p>
+                            <h3 class="mb-0">{{ total_vehicles }}</h3>
+                        </div>
+                        <i class="fas fa-car fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 text-uppercase">Today's Revenue</p>
+                            <h3 class="mb-0">Rs. {{ "%.0f"|format(today_revenue) }}</h3>
+                        </div>
+                        <i class="fas fa-rupee-sign fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Revenue Per Plaza -->
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Revenue Per Plaza (Last 7 Days)</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Plaza</th>
+                                <th>Vehicles</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for plaza_data in revenue_per_plaza %}
+                            <tr>
+                                <td>{{ plaza_data.plaza_name }}</td>
+                                <td>{{ plaza_data.vehicle_count }}</td>
+                                <td><strong>Rs. {{ "%.2f"|format(plaza_data.total_revenue) }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Summary -->
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-calendar-today"></i> Today's Summary</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Plaza</th>
+                                <th>Vehicles</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for summary in daily_summaries %}
+                            <tr>
+                                <td>Plaza #{{ summary.plaza_id }}</td>
+                                <td>{{ summary.total_vehicles }}</td>
+                                <td><strong>Rs. {{ "%.2f"|format(summary.total_revenue) }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if fraud_indicators %}
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card shadow border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Fraud Alerts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning" role="alert">
+                        <strong>{{ fraud_indicators|length }} suspicious vehicle(s) detected:</strong>
+                    </div>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Vehicle Number</th>
+                                <th>Type</th>
+                                <th>Failed Transactions</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vehicle in fraud_indicators %}
+                            <tr>
+                                <td>{{ vehicle.vehicle_number }}</td>
+                                <td>{{ vehicle.vehicle_type }}</td>
+                                <td><span class="badge bg-danger">{{ vehicle.failed_transactions }}</span></td>
+                                <td><a href="#" class="btn btn-sm btn-outline-primary">Review</a></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-cogs"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{{ url_for('admin.plazas') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-road"></i> Manage Toll Plazas
+                        </a>
+                        <a href="{{ url_for('admin.toll_rates') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-tag"></i> Configure Toll Rates
+                        </a>
+                        <a href="{{ url_for('admin.users') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-users"></i> User Management
+                        </a>
+                        <a href="{{ url_for('admin.analytics') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-chart-pie"></i> Detailed Analytics
+                        </a>
+                        <a href="{{ url_for('admin.ml_predictions') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-brain"></i> AI Traffic Prediction
+                        </a>
+                        <a href="{{ url_for('admin.spark_ui') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-desktop"></i> Spark UI (Real-time Monitoring)
+                        </a>
+                        <a href="{{ url_for('admin.spark_analytics') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-database"></i> Spark Big Data Analytics
+                        </a>
+                        <a href="{{ url_for('admin.generate_traffic_logs') }}" class="list-group-item list-group-item-action" method="post">
+                            <i class="fas fa-sync"></i> Generate Traffic Logs (ML Data)
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

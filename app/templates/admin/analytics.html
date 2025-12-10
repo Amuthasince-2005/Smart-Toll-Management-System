@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics & Reports - Smart Toll System{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <h2 class="mb-4">Analytics & Reports</h2>
+
+    <!-- Date Range Filter -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" 
+                                   value="{{ start_date or '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" 
+                                   value="{{ end_date or '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow border-0">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Total Transactions</p>
+                    <h3 class="text-primary">{{ summary.total_transactions | default(0) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow border-0">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Total Revenue</p>
+                    <h3 class="text-success">₹{{ "%.2f"|format(summary.total_revenue | default(0)) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow border-0">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Total Vehicles</p>
+                    <h3 class="text-info">{{ summary.total_vehicles | default(0) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow border-0">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Average Toll</p>
+                    <h3 class="text-warning">₹{{ "%.2f"|format(summary.avg_toll | default(0)) }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Revenue Trend</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">Vehicle Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="vehicleChart" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Report Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">Detailed Transaction Report</h5>
+                </div>
+                <div class="table-responsive">
+                    {% if transactions %}
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Vehicle Number</th>
+                                <th>Plaza</th>
+                                <th>Amount</th>
+                                <th>Payment Mode</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for txn in transactions %}
+                            <tr>
+                                <td><small>{{ txn.timestamp.strftime('%d %b %Y, %H:%M') }}</small></td>
+                                <td>{{ txn.vehicle.vehicle_number }}</td>
+                                <td>{{ txn.plaza.plaza_name }}</td>
+                                <td><strong>₹{{ "%.2f"|format(txn.amount) }}</strong></td>
+                                <td><span class="badge bg-secondary">{{ txn.payment_mode }}</span></td>
+                                <td>
+                                    {% if txn.status == 'completed' %}
+                                        <span class="badge bg-success">Completed</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">{{ txn.status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="alert alert-warning m-3 mb-0">No transactions found for selected period.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Revenue Chart
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+new Chart(revenueCtx, {
+    type: 'line',
+    data: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [{
+            label: 'Daily Revenue (₹)',
+            data: [12000, 15000, 14000, 16000, 18000, 20000, 17000],
+            borderColor: '#0d6efd',
+            backgroundColor: 'rgba(13, 110, 253, 0.1)',
+            borderWidth: 2,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: true } }
+    }
+});
+
+// Vehicle Distribution Chart
+const vehicleCtx = document.getElementById('vehicleChart').getContext('2d');
+new Chart(vehicleCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Cars', 'Bikes', 'Trucks', 'Buses', 'Heavy'],
+        datasets: [{
+            data: [40, 25, 15, 12, 8],
+            backgroundColor: [
+                '#0d6efd', '#198754', '#fd7e14', '#dc3545', '#6f42c1'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } }
+    }
+});
+</script>
+{% endblock %}

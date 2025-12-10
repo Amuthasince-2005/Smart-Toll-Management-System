@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+
+{% block title %}Spark Analytics - Smart Toll System{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Spark Big Data Analytics</h2>
+            <p class="text-muted">Real-time distributed data processing and analysis</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" id="runSparkBtn">
+                <i class="fas fa-play"></i> Run Spark Analysis
+            </button>
+        </div>
+    </div>
+
+    {% if spark_stats.error %}
+    <div class="alert alert-danger" role="alert">
+        <i class="fas fa-exclamation-circle"></i>
+        <strong>Error:</strong> {{ spark_stats.error }}
+    </div>
+    {% endif %}
+
+    {% if spark_stats.status == 'success' %}
+    <!-- Status Card -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="alert alert-success" role="alert">
+                <i class="fas fa-check-circle"></i>
+                <strong>Analysis Complete!</strong> Processed {{ spark_stats.total_transactions }} transactions
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card shadow border-0">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Total Transactions</p>
+                    <h3 class="text-primary">{{ spark_stats.total_transactions }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow border-0">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Total Revenue</p>
+                    <h3 class="text-success">₹{{ "%.2f"|format(spark_stats.total_revenue) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow border-0">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Average Toll</p>
+                    <h3 class="text-info">₹{{ "%.2f"|format(spark_stats.total_revenue / spark_stats.total_transactions if spark_stats.total_transactions > 0 else 0) }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow border-0">
+                <div class="card-body">
+                    <p class="text-muted mb-2">Plazas Processed</p>
+                    <h3 class="text-warning">{{ spark_stats.revenue_by_plaza | length }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row mb-4">
+        <!-- Revenue by Plaza -->
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Revenue by Plaza</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="revenueChart" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vehicle Type Distribution -->
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-pie-chart"></i> Vehicle Type Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="vehicleChart" style="max-height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Tables -->
+    <div class="row mb-4">
+        <!-- Plaza Revenue Details -->
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-map-pin"></i> Plaza Analytics</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Plaza</th>
+                                <th>Transactions</th>
+                                <th>Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if spark_stats.revenue_by_plaza %}
+                                {% for plaza in spark_stats.revenue_by_plaza %}
+                                <tr>
+                                    <td><strong>{{ plaza.plaza }}</strong></td>
+                                    <td><span class="badge bg-info">{{ plaza.count }}</span></td>
+                                    <td><strong>₹{{ "%.2f"|format(plaza.revenue) }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No data available</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vehicle Type Details -->
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-car"></i> Vehicle Statistics</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Vehicle Type</th>
+                                <th>Count</th>
+                                <th>Percentage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if spark_stats.vehicle_distribution %}
+                                {% set total = spark_stats.vehicle_distribution | map(attribute='count') | sum %}
+                                {% for vehicle in spark_stats.vehicle_distribution %}
+                                <tr>
+                                    <td><strong>{{ vehicle.type | upper }}</strong></td>
+                                    <td><span class="badge bg-secondary">{{ vehicle.count }}</span></td>
+                                    <td>{{ "%.1f"|format(vehicle.count / total * 100 if total > 0 else 0) }}%</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No data available</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spark Configuration Info -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-cogs"></i> Spark Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Processing Mode:</strong> <span class="badge bg-primary">Local[*]</span></p>
+                            <p><strong>Driver Memory:</strong> 2GB</p>
+                            <p><strong>Executor Memory:</strong> 2GB</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Partitions:</strong> 4</p>
+                            <p><strong>Shuffle Partitions:</strong> 200</p>
+                            <p><strong>Status:</strong> <span class="badge bg-success">Ready</span></p>
+                        </div>
+                    </div>
+                    <hr>
+                    <p class="mb-0 text-muted small">
+                        <i class="fas fa-info-circle"></i>
+                        This analytics dashboard processes toll transaction data using Apache Spark for distributed computing. 
+                        Data is aggregated by plaza, vehicle type, and time to provide real-time insights.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- No Data State -->
+    <div class="alert alert-info text-center" role="alert">
+        <i class="fas fa-info-circle fa-3x mb-3"></i>
+        <h5>Ready to Analyze</h5>
+        <p class="mb-3">Click the "Run Spark Analysis" button to process toll transaction data using Apache Spark.</p>
+        <button class="btn btn-primary" id="runSparkBtn2">
+            <i class="fas fa-play"></i> Start Spark Analysis
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Initialize charts if data exists
+{% if spark_stats.status == 'success' and spark_stats.revenue_by_plaza %}
+
+// Revenue Chart
+const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+const revenueData = {{ spark_stats.revenue_by_plaza | tojson }};
+new Chart(revenueCtx, {
+    type: 'bar',
+    data: {
+        labels: revenueData.map(p => p.plaza),
+        datasets: [{
+            label: 'Revenue (₹)',
+            data: revenueData.map(p => p.revenue),
+            backgroundColor: [
+                '#0d6efd', '#198754', '#fd7e14', '#dc3545', '#6f42c1'
+            ],
+            borderRadius: 5
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: true }
+        },
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+
+{% endif %}
+
+{% if spark_stats.status == 'success' and spark_stats.vehicle_distribution %}
+
+// Vehicle Distribution Chart
+const vehicleCtx = document.getElementById('vehicleChart').getContext('2d');
+const vehicleData = {{ spark_stats.vehicle_distribution | tojson }};
+new Chart(vehicleCtx, {
+    type: 'doughnut',
+    data: {
+        labels: vehicleData.map(v => v.type.toUpperCase()),
+        datasets: [{
+            data: vehicleData.map(v => v.count),
+            backgroundColor: [
+                '#0d6efd', '#198754', '#fd7e14', '#dc3545', '#6f42c1'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { position: 'bottom' }
+        }
+    }
+});
+
+{% endif %}
+
+// Run Spark Analysis button handler
+document.querySelectorAll('#runSparkBtn, #runSparkBtn2').forEach(btn => {
+    btn.addEventListener('click', function() {
+        // Show loading spinner
+        btn.disabled = true;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting to Spark...';
+        
+        // Show toast notification
+        const toast = document.createElement('div');
+        toast.className = 'alert alert-info alert-dismissible fade show position-fixed';
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 400px;';
+        toast.innerHTML = `
+            <i class="fas fa-database"></i> <strong>Spark Analysis Submitted</strong><br>
+            Jobs submitted to Spark cluster at DESKTOP-9Q68UBH:4040<br>
+            <small>View live progress in Spark UI</small>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(toast);
+        
+        // Call API to run Spark analysis
+        fetch('{{ url_for("admin.run_spark_analysis") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            
+            if (data.success) {
+                // Show success message
+                const successToast = document.createElement('div');
+                successToast.className = 'alert alert-success alert-dismissible fade show position-fixed';
+                successToast.style.cssText = 'top: 80px; right: 20px; z-index: 9999; min-width: 400px;';
+                successToast.innerHTML = `
+                    <i class="fas fa-check-circle"></i> <strong>Success!</strong><br>
+                    ${data.message}<br>
+                    <a href="http://DESKTOP-9Q68UBH:4040/jobs/" target="_blank" class="btn btn-sm btn-success mt-2">
+                        <i class="fas fa-external-link-alt"></i> View Spark Jobs
+                    </a>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.body.appendChild(successToast);
+                
+                // Reload page after 3 seconds to show updated stats
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+            } else {
+                // Show error
+                const errorToast = document.createElement('div');
+                errorToast.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+                errorToast.style.cssText = 'top: 80px; right: 20px; z-index: 9999; min-width: 400px;';
+                errorToast.innerHTML = `
+                    <i class="fas fa-exclamation-circle"></i> <strong>Error!</strong><br>
+                    ${data.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                `;
+                document.body.appendChild(errorToast);
+            }
+        })
+        .catch(error => {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            console.error('Error:', error);
+            
+            const errorToast = document.createElement('div');
+            errorToast.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+            errorToast.style.cssText = 'top: 80px; right: 20px; z-index: 9999; min-width: 400px;';
+            errorToast.innerHTML = `
+                <i class="fas fa-exclamation-circle"></i> <strong>Connection Error!</strong><br>
+                Failed to submit jobs to Spark
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(errorToast);
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}User Login - Smart Toll System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-lg border-primary">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <i class="fas fa-user fa-2x"></i>
+                    <h4 class="mt-2 mb-0">User Login</h4>
+                </div>
+                <div class="card-body p-5">
+                    <p class="text-muted text-center mb-4">Welcome to Smart Toll System</p>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" action="{{ url_for('auth.user_login') }}">
+                        <div class="mb-3">
+                            <label for="email" class="form-label"><i class="fas fa-envelope"></i> Email Address</label>
+                            <input type="email" class="form-control form-control-lg" id="email" name="email" required autofocus>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label"><i class="fas fa-lock"></i> Password</label>
+                            <input type="password" class="form-control form-control-lg" id="password" name="password" required>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                            <label class="form-check-label" for="remember">Remember me</label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-sign-in-alt"></i> User Login
+                        </button>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <p class="text-center text-muted mb-2">
+                        Are you an admin? <a href="{{ url_for('auth.admin_login') }}" class="text-danger"><strong>Admin Login</strong></a>
+                    </p>
+
+                    <p class="text-center">
+                        Don't have an account? 
+                        <a href="{{ url_for('auth.register') }}">Register here</a>
+                    </p>
+
+                    <!-- Demo Credentials -->
+                    <div class="alert alert-info mt-4 small">
+                        <strong><i class="fas fa-info-circle"></i> Demo User Credentials:</strong><br>
+                        Email: <code>user@example.com</code><br>
+                        Password: <code>password</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

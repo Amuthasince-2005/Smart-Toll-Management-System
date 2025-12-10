@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Smart Toll System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1><i class="fas fa-chart-line"></i> Dashboard</h1>
+            <p class="text-muted">Welcome, {{ current_user.name }}!</p>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 text-uppercase">Total Vehicles</p>
+                            <h3 class="mb-0">{{ summary.vehicles }}</h3>
+                        </div>
+                        <i class="fas fa-car fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 text-uppercase">Total Transactions</p>
+                            <h3 class="mb-0">{{ summary.total_transactions }}</h3>
+                        </div>
+                        <i class="fas fa-receipt fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 text-uppercase">Total Paid</p>
+                            <h3 class="mb-0">Rs. {{ "%.2f"|format(summary.total_amount_paid) }}</h3>
+                        </div>
+                        <i class="fas fa-rupee-sign fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-0 text-uppercase">Wallet Balance</p>
+                            <h3 class="mb-0">Rs. {{ "%.2f"|format(wallet.balance if wallet else 0) }}</h3>
+                        </div>
+                        <i class="fas fa-wallet fa-3x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Quick Actions -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{{ url_for('dashboard.vehicles') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-car"></i> View Vehicles
+                        </a>
+                        <a href="{{ url_for('dashboard.add_vehicle') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-plus-circle"></i> Add New Vehicle
+                        </a>
+                        <a href="{{ url_for('dashboard.wallet') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-wallet"></i> View Wallet
+                        </a>
+                        <a href="{{ url_for('dashboard.recharge_wallet') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-plus"></i> Recharge Wallet
+                        </a>
+                        <a href="{{ url_for('dashboard.toll_history') }}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-history"></i> Toll History
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Vehicles -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-list"></i> Your Vehicles</h5>
+                </div>
+                <div class="card-body">
+                    {% if vehicles %}
+                        <div class="list-group">
+                            {% for vehicle in vehicles[:5] %}
+                                <div class="list-group-item">
+                                    <div class="d-flex justify-content-between">
+                                        <div>
+                                            <strong>{{ vehicle.vehicle_number }}</strong>
+                                            <small class="d-block text-muted">{{ vehicle.vehicle_type.value|title }}</small>
+                                        </div>
+                                        <span class="badge bg-{{ 'success' if vehicle.status == 'active' else 'danger' }}">
+                                            {{ vehicle.status|title }}
+                                        </span>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted">No vehicles registered yet. 
+                            <a href="{{ url_for('dashboard.add_vehicle') }}">Add one now</a>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
